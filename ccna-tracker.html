@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CCNA Tracker">
+<title>CCNA Tracker</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: #0F172A; color: #E2E8F0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; min-height: 100vh; padding-bottom: 80px; }
+  
+  /* Header */
+  .header { background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border-bottom: 1px solid #1E293B; padding: 20px 16px 14px; position: sticky; top: 0; z-index: 10; }
+  .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .header-title { font-size: 18px; font-weight: 700; color: #F1F5F9; }
+  .badge { background: #1E3A5F; color: #60A5FA; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .progress-bar { background: #1E293B; border-radius: 8px; height: 8px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #3B82F6, #06B6D4); border-radius: 8px; transition: width 0.4s ease; }
+  .progress-text { display: flex; justify-content: space-between; margin-top: 5px; font-size: 11px; color: #64748B; }
+  .progress-text span:last-child { color: #60A5FA; font-weight: 700; }
+
+  /* Nav */
+  .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #1E293B; border-top: 1px solid #334155; display: flex; z-index: 10; }
+  .nav-btn { flex: 1; padding: 12px 0 10px; border: none; background: none; color: #475569; font-size: 10px; font-weight: 500; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .nav-btn.active { color: #60A5FA; font-weight: 700; }
+  .nav-btn span.icon { font-size: 20px; }
+
+  /* Cards */
+  .section { padding: 0 16px; }
+  .card { background: #1E293B; border-radius: 14px; padding: 16px; margin-bottom: 12px; border: 1px solid #334155; }
+  .card-blue { border-color: #3B82F6; background: rgba(59,130,246,0.05); }
+
+  /* Tag */
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-bottom: 6px; }
+
+  /* Month buttons */
+  .month-btn { width: 100%; background: #1E293B; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; display: flex; align-items: center; gap: 12px; text-align: left; transition: all 0.2s; }
+  .month-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0; }
+  .month-mini-bar { background: #0F172A; border-radius: 4px; height: 4px; overflow: hidden; margin-top: 4px; }
+  .month-mini-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+
+  /* Week card */
+  .week-btn { width: 100%; background: #1E293B; border: 1px solid #334155; border-radius: 14px; padding: 14px; margin-bottom: 10px; cursor: pointer; text-align: left; transition: all 0.2s; }
+  .week-btn.done { background: #0F2D1A; border-color: #166534; }
+  .week-dots { display: flex; gap: 4px; margin-top: 8px; }
+  .week-dot { flex: 1; height: 4px; border-radius: 2px; background: #334155; }
+  .week-dot.done { background: #22C55E; }
+
+  /* Day list */
+  .day-item { display: flex; align-items: center; gap: 12px; background: #0F172A; border: 1px solid #1E293B; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.15s; }
+  .day-item.done { background: #052E16; border-color: #166534; }
+  .day-check { width: 22px; height: 22px; border-radius: 6px; border: 2px solid #334155; background: transparent; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 13px; font-weight: 800; color: #052E16; }
+  .day-check.done { border-color: #22C55E; background: #22C55E; }
+  .day-label { font-size: 11px; font-weight: 600; }
+  .day-text { font-size: 13px; color: #CBD5E1; margin-top: 1px; }
+  .day-text.done { color: #4ADE80; }
+
+  /* Stats */
+  .stats-row { display: flex; gap: 12px; margin-bottom: 12px; }
+  .stat-box { flex: 1; text-align: center; background: #0F172A; border-radius: 10px; padding: 10px 6px; }
+  .stat-num { font-size: 20px; font-weight: 800; }
+  .stat-label { font-size: 10px; color: #64748B; }
+
+  /* Back btn */
+  .back-btn { background: none; border: none; color: #60A5FA; font-size: 13px; cursor: pointer; padding: 12px 0; display: flex; align-items: center; gap: 4px; }
+
+  /* Month header */
+  .month-header { border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; }
+  .month-header-sub { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .month-header-title { font-size: 17px; font-weight: 700; color: #F1F5F9; }
+
+  /* Note */
+  textarea { width: 100%; background: #0F172A; border: 1px solid #334155; color: #E2E8F0; border-radius: 8px; padding: 10px; font-size: 13px; min-height: 100px; resize: vertical; font-family: inherit; }
+  .btn { border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-blue { background: #3B82F6; color: white; }
+  .btn-gray { background: #334155; color: #94A3B8; }
+  .btn-sm { padding: 4px 10px; font-size: 11px; font-weight: 500; }
+  .flex-gap { display: flex; gap: 8px; margin-top: 8px; }
+
+  /* Date input */
+  input[type="date"] { background: #0F172A; border: 1px solid #334155; color: #E2E8F0; padding: 8px 12px; border-radius: 8px; font-size: 14px; width: 100%; }
+
+  /* Section label */
+  .section-label { font-size: 12px; color: #64748B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+
+  /* Lab box */
+  .lab-box { background: #0F172A; border-radius: 8px; padding: 10px; margin-top: 10px; }
+  .lab-label { font-size: 11px; color: #64748B; margin-bottom: 2px; }
+  .lab-text { font-size: 12px; color: #94A3B8; }
+
+  /* Empty state */
+  .empty { text-align: center; color: #475569; padding: 40px 20px; }
+  .empty-icon { font-size: 36px; margin-bottom: 10px; }
+
+  /* Current week highlight */
+  .current-week-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .current-week-days { display: flex; gap: 6px; flex-wrap: wrap; }
+  .day-btn-sm { width: 40px; height: 40px; border-radius: 8px; border: 2px solid #334155; background: transparent; color: #475569; font-size: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .day-btn-sm.done { border-color: #22C55E; background: #052E16; color: #22C55E; }
+
+  .pt16 { padding-top: 16px; }
+  .mb10 { margin-bottom: 10px; }
+  .text-green { color: #22C55E; }
+  .text-muted { color: #64748B; }
+  .text-sm { font-size: 13px; }
+  .fw700 { font-weight: 700; }
+  .fs15 { font-size: 15px; }
+  .fs22 { font-size: 22px; font-weight: 800; }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+const MONTHS = [
+  { id:1, title:"Fundamentos de Redes", color:"#3B82F6", weeks:[
+    { id:1, title:"Modelo OSI, tipos de rede e topologias", lab:"Desenhar o modelo OSI à mão / no Packet Tracer", days:["Assistir aula sobre modelo OSI","Estudar tipos de rede (LAN, WAN, MAN)","Topologias de rede","Revisão + exercícios","Laboratório prático","Simulação no Packet Tracer","Revisão semanal"] },
+    { id:2, title:"Modelo TCP/IP, protocolos e encapsulamento", lab:"Comparar OSI x TCP/IP em diagrama", days:["Modelo TCP/IP camadas","Protocolos principais","Encapsulamento de dados","Comparação OSI x TCP/IP","Laboratório prático","Exercícios de fixação","Revisão semanal"] },
+    { id:3, title:"Endereçamento IPv4, classes e máscara de sub-rede", lab:"Exercícios de conversão binária", days:["Endereçamento IPv4 básico","Classes de endereço","Máscara de sub-rede","Conversão binária","Laboratório prático","Exercícios de fixação","Revisão semanal"] },
+    { id:4, title:"Subnetting — CIDR e VLSM ⚠️ Prioridade máxima", lab:"20 exercícios de subnetting por dia", days:["CIDR — conceito e notação","VLSM — sub-redes variáveis","Cálculo de sub-redes","Exercícios intensivos","Laboratório no Packet Tracer","Simulado de subnetting","Revisão semanal + reforço"] },
+  ]},
+  { id:2, title:"Switching (Camada 2)", color:"#8B5CF6", weeks:[
+    { id:5, title:"Ethernet, MAC address e funcionamento do switch", lab:"Montar rede simples com switches", days:["Ethernet e padrões","Endereço MAC","Como o switch aprende MACs","Tabela CAM","Laboratório prático","Configuração básica de switch","Revisão semanal"] },
+    { id:6, title:"VLANs e Trunk", lab:"Criar VLANs e testar comunicação", days:["Conceito de VLAN","Configuração de VLANs","Trunk entre switches","Protocolo 802.1Q","Laboratório VLANs","Exercícios práticos","Revisão semanal"] },
+    { id:7, title:"STP — Spanning Tree Protocol", lab:"Simular loop e observar STP agindo", days:["Problema de loops na rede","Como o STP funciona","Eleição do Root Bridge","Estados das portas STP","Laboratório STP","RSTP — versão rápida","Revisão semanal"] },
+    { id:8, title:"EtherChannel e boas práticas", lab:"Configurar LACP no Packet Tracer", days:["Conceito de EtherChannel","Protocolos LACP e PAgP","Configuração EtherChannel","Boas práticas de switching","Laboratório EtherChannel","Exercícios práticos","Revisão semanal"] },
+  ]},
+  { id:3, title:"Roteamento (Camada 3)", color:"#10B981", weeks:[
+    { id:9, title:"Rotas estáticas e funcionamento do roteador", lab:"Configurar rotas estáticas no Packet Tracer", days:["Como o roteador funciona","Tabela de roteamento","Rota estática básica","Rota padrão (default route)","Laboratório rotas estáticas","Troubleshooting de rotas","Revisão semanal"] },
+    { id:10, title:"OSPF single-area", lab:"Montar topologia com 3 roteadores", days:["Protocolo OSPF — conceito","Tipos de redes OSPF","Configuração OSPF básica","Verificação e debug OSPF","Laboratório OSPF","Exercícios práticos","Revisão semanal"] },
+    { id:11, title:"OSPF multi-area", lab:"Expandir topologia com múltiplas áreas", days:["Multi-area OSPF — conceito","Area 0 e áreas secundárias","ABR e ASBR","Configuração multi-area","Laboratório multi-area","Troubleshooting OSPF","Revisão semanal"] },
+    { id:12, title:"Inter-VLAN Routing", lab:"Integrar com lab de VLANs anterior", days:["Problema de comunicação entre VLANs","Router-on-a-stick","Subinterfaces no roteador","Layer 3 Switch","Laboratório inter-VLAN","Exercícios completos","Revisão semanal"] },
+  ]},
+  { id:4, title:"Serviços e Segurança", color:"#F59E0B", weeks:[
+    { id:13, title:"DHCP e DNS", lab:"Configurar servidor DHCP no roteador", days:["DHCP — conceito e funcionamento","Configuração DHCP no roteador","DHCP Relay Agent","DNS — conceito e funcionamento","Laboratório DHCP + DNS","Exercícios práticos","Revisão semanal"] },
+    { id:14, title:"NAT e PAT", lab:"Simular acesso à internet com NAT", days:["NAT — conceito e tipos","Static NAT","Dynamic NAT","PAT (NAT Overload)","Laboratório NAT/PAT","Troubleshooting NAT","Revisão semanal"] },
+    { id:15, title:"ACLs — Standard e Extended", lab:"Criar regras de bloqueio e permissão", days:["ACL — conceito e funcionamento","ACL Standard","ACL Extended","Onde aplicar ACLs","Laboratório ACLs","Troubleshooting ACLs","Revisão semanal"] },
+    { id:16, title:"Port Security e SSH", lab:"Configurar acesso seguro aos dispositivos", days:["Port Security — conceito","Configuração Port Security","Modos de violação","SSH — configuração segura","Laboratório Port Security + SSH","Boas práticas de segurança","Revisão semanal"] },
+  ]},
+  { id:5, title:"IPv6, WAN e Wireless", color:"#EF4444", weeks:[
+    { id:17, title:"IPv6 — endereçamento e configuração", lab:"Montar rede dual-stack IPv4/IPv6", days:["Por que IPv6?","Estrutura do endereço IPv6","Tipos de endereço IPv6","Configuração IPv6 básica","Laboratório IPv6","Roteamento IPv6","Revisão semanal"] },
+    { id:18, title:"WAN, VPN e SD-WAN", lab:"Revisão teórica + resumos", days:["Conceitos WAN","Tecnologias WAN","VPN — conceito e tipos","SD-WAN — conceito","Laboratório teórico","Revisão e resumos","Revisão semanal"] },
+    { id:19, title:"Wireless — 802.11, WLC e segurança Wi-Fi", lab:"Simulação wireless no Packet Tracer", days:["Padrões 802.11","Componentes de rede wireless","WLC — Wireless LAN Controller","Segurança Wi-Fi (WPA2/WPA3)","Laboratório wireless","Exercícios práticos","Revisão semanal"] },
+    { id:20, title:"Automação, APIs REST e Ansible", lab:"Leitura + vídeos do Kalau", days:["Automação de redes — conceito","APIs REST","JSON e YANG","Ansible básico","DNA Center — conceito","Revisão teórica","Revisão semanal"] },
+  ]},
+  { id:6, title:"Revisão e Simulados", color:"#06B6D4", weeks:[
+    { id:21, title:"Revisão Subnetting e Switching", lab:"Labs completos de revisão", days:["Revisão Subnetting intensiva","Exercícios Subnetting","Revisão VLANs e Trunk","Revisão STP e EtherChannel","Laboratório switching completo","Simulado parcial","Revisão dos erros"] },
+    { id:22, title:"Revisão Roteamento e Serviços", lab:"Labs completos de revisão", days:["Revisão OSPF","Revisão NAT/PAT e ACLs","Revisão DHCP e DNS","Revisão IPv6","Laboratório roteamento completo","Simulado parcial","Revisão dos erros"] },
+    { id:23, title:"Simulados completos diários", lab:"Boson Netsim ou ExamTopics", days:["Simulado completo 1","Revisão erros simulado 1","Simulado completo 2","Revisão erros simulado 2","Simulado completo 3","Revisão erros simulado 3","Simulado final"] },
+    { id:24, title:"Revisão de erros e descanso pré-prova", lab:"Últimos ajustes", days:["Revisão pontos fracos","Revisão comandos IOS","Revisão conceitos chave","Descanso mental","Leitura leve de resumos","Descanso total","🎯 DIA DA PROVA!"] },
+  ]},
+];
+
+const DAY_NAMES = ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
+
+// State
+let state = {
+  view: "home",
+  activeMonth: 0,
+  activeWeek: null,
+  editingNote: false,
+  noteText: "",
+  progress: {},
+  notes: {},
+  startDate: null,
+};
+
+function load() {
+  try { state.progress = JSON.parse(localStorage.getItem("ccna_progress") || "{}"); } catch {}
+  try { state.notes = JSON.parse(localStorage.getItem("ccna_notes") || "{}"); } catch {}
+  state.startDate = localStorage.getItem("ccna_start") || null;
+}
+
+function saveProgress() { localStorage.setItem("ccna_progress", JSON.stringify(state.progress)); }
+function saveNotes() { localStorage.setItem("ccna_notes", JSON.stringify(state.notes)); }
+function saveStart(d) { localStorage.setItem("ccna_start", d); }
+
+function toggleDay(weekId, dayIdx) {
+  const key = `w${weekId}_d${dayIdx}`;
+  state.progress[key] = !state.progress[key];
+  saveProgress();
+  render();
+}
+
+function getWeekDone(weekId) {
+  let c = 0;
+  for (let i = 0; i < 7; i++) if (state.progress[`w${weekId}_d${i}`]) c++;
+  return c;
+}
+
+function getTotals() {
+  const total = MONTHS.reduce((a, m) => a + m.weeks.length * 7, 0);
+  const done = Object.values(state.progress).filter(Boolean).length;
+  return { total, done, pct: Math.round((done / total) * 100) };
+}
+
+function getCurrentWeek() {
+  if (!state.startDate) return null;
+  const diff = Math.floor((Date.now() - new Date(state.startDate)) / 86400000);
+  const weekNum = Math.min(Math.floor(diff / 7), 23);
+  if (weekNum < 0) return null;
+  let count = 0;
+  for (const month of MONTHS) {
+    for (const week of month.weeks) {
+      if (count === weekNum) return { week, month };
+      count++;
+    }
+  }
+  return null;
+}
+
+function hex2rgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// Render functions
+function renderHeader() {
+  const { total, done, pct } = getTotals();
+  return `
+    <div class="header">
+      <div class="header-top">
+        <div class="header-title">📡 CCNA Tracker</div>
+        <div class="badge">${pct}% completo</div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div class="progress-text"><span>${done} dias concluídos</span><span>${total - done} restantes</span></div>
+    </div>`;
+}
+
+function renderNav() {
+  const tabs = [
+    { id:"home", icon:"🏠", label:"Início" },
+    { id:"months", icon:"📅", label:"Meses" },
+    { id:"notes", icon:"📝", label:"Notas" },
+  ];
+  const activeTab = state.view === "month" || state.view === "week" ? "months" : state.view;
+  return `<nav class="nav">${tabs.map(t => `
+    <button class="nav-btn ${activeTab === t.id ? 'active' : ''}" onclick="nav('${t.id}')">
+      <span class="icon">${t.icon}</span><span>${t.label}</span>
+    </button>`).join("")}</nav>`;
+}
+
+function renderHome() {
+  const { total, done, pct } = getTotals();
+  const cur = getCurrentWeek();
+
+  let currentBlock = "";
+  if (!state.startDate) {
+    currentBlock = `
+      <div class="card card-blue">
+        <p style="color:#93C5FD;font-size:13px;margin-bottom:12px">📅 Defina a data de início para acompanhar sua semana atual</p>
+        <input type="date" id="startInput" style="margin-bottom:10px">
+        <br><button class="btn btn-blue" onclick="setStart()" style="margin-top:8px">Confirmar data</button>
+      </div>`;
+  } else if (cur) {
+    const weekDone = getWeekDone(cur.week.id);
+    currentBlock = `
+      <div class="card" style="border-color:${cur.month.color};background:${hex2rgba(cur.month.color,0.05)}">
+        <div class="current-week-header">
+          <div>
+            <div class="tag" style="background:${hex2rgba(cur.month.color,0.2)};color:${cur.month.color}">Semana atual</div>
+            <div class="fs15 fw700" style="color:#F1F5F9">Semana ${cur.week.id}</div>
+            <div style="font-size:12px;color:#94A3B8;margin-top:2px">${cur.week.title}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="fs22" style="color:${cur.month.color}">${weekDone}<span style="font-size:13px;color:#64748B">/7</span></div>
+            <div style="font-size:10px;color:#64748B">dias</div>
+          </div>
+        </div>
+        <div class="current-week-days">
+          ${DAY_NAMES.map((d,i) => `<button class="day-btn-sm ${state.progress[`w${cur.week.id}_d${i}`]?'done':''}" onclick="toggleDay(${cur.week.id},${i})">${d}</button>`).join("")}
+        </div>
+        <div class="lab-box"><div class="lab-label">🧪 Lab desta semana</div><div class="lab-text">${cur.week.lab}</div></div>
+      </div>`;
+  } else {
+    currentBlock = `<div class="card" style="background:#052E16;border-color:#166534"><div style="font-size:16px;font-weight:700;color:#22C55E">🎉 Cronograma concluído!</div><div style="font-size:13px;color:#4ADE80;margin-top:4px">Você está pronto para o exame CCNA!</div></div>`;
+  }
+
+  const monthsBlock = MONTHS.map((month, mi) => {
+    const totalW = month.weeks.length * 7;
+    const doneW = month.weeks.reduce((a, w) => a + getWeekDone(w.id), 0);
+    const p = Math.round((doneW / totalW) * 100);
+    return `
+      <button class="month-btn" style="border:1px solid ${p===100?month.color:'#334155'}" onclick="goMonth(${mi})">
+        <div class="month-icon" style="background:${hex2rgba(month.color,0.15)};color:${month.color}">${p===100?'✓':'M'+month.id}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:#F1F5F9">${month.title}</div>
+          <div class="month-mini-bar"><div class="month-mini-fill" style="width:${p}%;background:${month.color}"></div></div>
+        </div>
+        <div style="font-size:13px;font-weight:700;color:${month.color};flex-shrink:0">${p}%</div>
+      </button>`;
+  }).join("");
+
+  const statsBlock = `
+    <div class="card">
+      <div class="section-label">Progresso geral</div>
+      <div class="stats-row">
+        ${[{l:"Dias",v:done,t:total,c:"#3B82F6"},{l:"Semanas",v:Math.floor(done/7),t:24,c:"#8B5CF6"},{l:"Meses",v:Math.min(Math.floor(done/28),6),t:6,c:"#10B981"}]
+          .map(s=>`<div class="stat-box"><div class="stat-num" style="color:${s.c}">${s.v}</div><div class="stat-label">/ ${s.t} ${s.l}</div></div>`).join("")}
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div class="progress-text"><span>${done} de ${total} dias</span><span>${pct}%</span></div>
+    </div>`;
+
+  return `<div class="section pt16">${currentBlock}${statsBlock}<div class="section-label">Meses</div>${monthsBlock}</div>`;
+}
+
+function renderMonths() {
+  const month = MONTHS[state.activeMonth];
+  return `
+    <div class="section">
+      <button class="back-btn" onclick="nav('home')">← Voltar</button>
+      <div class="month-header" style="background:${hex2rgba(month.color,0.1)};border:1px solid ${hex2rgba(month.color,0.2)}">
+        <div class="month-header-sub" style="color:${month.color}">Mês ${month.id}</div>
+        <div class="month-header-title">${month.title}</div>
+      </div>
+      ${month.weeks.map(week => {
+        const done = getWeekDone(week.id);
+        return `
+          <button class="week-btn ${done===7?'done':''}" onclick="goWeek(${week.id})">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div class="tag" style="background:${hex2rgba(month.color,0.2)};color:${month.color}">Semana ${week.id}</div>
+                <div style="font-size:13px;font-weight:600;color:#F1F5F9">${week.title}</div>
+              </div>
+              <div style="font-size:18px;font-weight:800;color:${done===7?'#22C55E':month.color}">${done===7?'✓':done+'/7'}</div>
+            </div>
+            <div class="week-dots">${Array(7).fill(0).map((_,i)=>`<div class="week-dot ${state.progress[`w${week.id}_d${i}`]?'done':''}"></div>`).join("")}</div>
+          </button>`;
+      }).join("")}
+    </div>`;
+}
+
+function renderWeek() {
+  const month = MONTHS.find(m => m.weeks.some(w => w.id === state.activeWeek));
+  const week = month?.weeks.find(w => w.id === state.activeWeek);
+  if (!week || !month) return "";
+  const noteKey = `week_${week.id}`;
+  const existingNote = state.notes[noteKey] || "";
+
+  const noteSection = state.editingNote ? `
+    <textarea id="noteArea" placeholder="Anotações, dúvidas, comandos importantes...">${existingNote}</textarea>
+    <div class="flex-gap">
+      <button class="btn btn-blue" style="flex:1" onclick="saveNote('${noteKey}')">Salvar</button>
+      <button class="btn btn-gray" onclick="cancelNote()">Cancelar</button>
+    </div>` :
+    existingNote ? `<div style="font-size:13px;color:#94A3B8;white-space:pre-wrap;line-height:1.6">${existingNote}</div>` :
+    `<div style="font-size:13px;color:#334155;font-style:italic">Nenhuma anotação ainda.</div>`;
+
+  return `
+    <div class="section">
+      <button class="back-btn" onclick="goMonth(${MONTHS.indexOf(month)})">← Voltar</button>
+      <div class="month-header" style="background:${hex2rgba(month.color,0.1)};border:1px solid ${hex2rgba(month.color,0.2)}">
+        <div class="month-header-sub" style="color:${month.color}">Semana ${week.id} · ${month.title}</div>
+        <div class="month-header-title">${week.title}</div>
+      </div>
+      <div class="card">
+        <div class="section-label">Dias da semana</div>
+        ${week.days.map((day, i) => {
+          const done = state.progress[`w${week.id}_d${i}`];
+          return `
+            <div class="day-item ${done?'done':''}" onclick="toggleDay(${week.id},${i})">
+              <div class="day-check ${done?'done':''}">${done?'✓':''}</div>
+              <div>
+                <div class="day-label" style="color:${month.color}">${DAY_NAMES[i]}</div>
+                <div class="day-text ${done?'done':''}">${day}</div>
+              </div>
+            </div>`;
+        }).join("")}
+      </div>
+      <div class="card">
+        <div class="lab-label" style="margin-bottom:6px">🧪 Lab da semana</div>
+        <div style="font-size:13px;color:#94A3B8">${week.lab}</div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div class="section-label" style="margin-bottom:0">📝 Anotações</div>
+          ${!state.editingNote ? `<button class="btn btn-gray btn-sm" onclick="startNote('${noteKey}')">${existingNote?'Editar':'Adicionar'}</button>` : ''}
+        </div>
+        ${noteSection}
+      </div>
+    </div>`;
+}
+
+function renderNotesView() {
+  const weeksWithNotes = MONTHS.flatMap(m => m.weeks.filter(w => state.notes[`week_${w.id}`]).map(w => ({ week:w, month:m })));
+  return `
+    <div class="section">
+      <div style="font-size:16px;font-weight:700;color:#F1F5F9;padding:16px 0 12px">Minhas Anotações</div>
+      ${weeksWithNotes.length === 0 ?
+        `<div class="empty"><div class="empty-icon">📝</div>Nenhuma anotação ainda.<br>Abra uma semana e adicione suas notas!</div>` :
+        weeksWithNotes.map(({week, month}) => `
+          <div class="card">
+            <div class="tag" style="background:${hex2rgba(month.color,0.2)};color:${month.color}">Semana ${week.id}</div>
+            <div style="font-size:13px;font-weight:600;color:#F1F5F9;margin-bottom:8px">${week.title}</div>
+            <div style="font-size:13px;color:#94A3B8;white-space:pre-wrap;line-height:1.6">${state.notes[`week_${week.id}`]}</div>
+          </div>`).join("")}
+    </div>`;
+}
+
+function render() {
+  const { total, done, pct } = getTotals();
+  let content = "";
+  if (state.view === "home") content = renderHome();
+  else if (state.view === "months") content = renderMonths();
+  else if (state.view === "week") content = renderWeek();
+  else if (state.view === "notes") content = renderNotesView();
+
+  document.getElementById("app").innerHTML = renderHeader() + `<div id="main">${content}</div>` + renderNav();
+}
+
+// Actions
+function nav(v) {
+  state.view = v;
+  state.editingNote = false;
+  if (v === "months") state.activeMonth = 0;
+  render();
+}
+function goMonth(mi) { state.activeMonth = mi; state.view = "months"; render(); }
+function goWeek(wid) { state.activeWeek = wid; state.view = "week"; state.editingNote = false; render(); }
+function setStart() {
+  const v = document.getElementById("startInput")?.value;
+  if (v) { state.startDate = v; saveStart(v); render(); }
+}
+function startNote(key) { state.editingNote = true; render(); setTimeout(() => { const el = document.getElementById("noteArea"); if(el) el.focus(); }, 50); }
+function cancelNote() { state.editingNote = false; render(); }
+function saveNote(key) {
+  const v = document.getElementById("noteArea")?.value || "";
+  state.notes[key] = v;
+  saveNotes();
+  state.editingNote = false;
+  render();
+}
+
+// Boot
+load();
+render();
+</script>
+</body>
+</html>
