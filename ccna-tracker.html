@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CCNA Tracker">
+<title>CCNA Tracker</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { background: #0F172A; color: #E2E8F0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; min-height: 100vh; padding-bottom: 90px; }
+
+.header { background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); border-bottom: 1px solid #1E293B; padding: 16px 16px 12px; position: sticky; top: 0; z-index: 10; }
+.header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.header-title { font-size: 17px; font-weight: 700; color: #F1F5F9; }
+.badge { background: #1E3A5F; color: #60A5FA; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.progress-bar { background: #1E293B; border-radius: 8px; height: 7px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #3B82F6, #06B6D4); border-radius: 8px; transition: width 0.4s ease; }
+.progress-text { display: flex; justify-content: space-between; margin-top: 5px; font-size: 11px; color: #64748B; }
+.countdown-banner { display: flex; gap: 6px; margin-top: 10px; }
+.countdown-box { flex: 1; background: #0F172A; border-radius: 10px; padding: 8px 4px; text-align: center; border: 1px solid #1E293B; }
+.countdown-num { font-size: 18px; font-weight: 800; line-height: 1; }
+.countdown-label { font-size: 9px; color: #64748B; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.4px; }
+
+.nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #1E293B; border-top: 1px solid #334155; display: flex; z-index: 10; padding-bottom: env(safe-area-inset-bottom); }
+.nav-btn { flex: 1; padding: 10px 0 8px; border: none; background: none; color: #475569; font-size: 9px; font-weight: 500; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.nav-btn.active { color: #60A5FA; font-weight: 700; }
+.nav-btn .icon { font-size: 18px; }
+
+.section { padding: 0 16px; }
+.card { background: #1E293B; border-radius: 14px; padding: 16px; margin-bottom: 12px; border: 1px solid #334155; }
+.card-blue { border-color: #3B82F6; background: rgba(59,130,246,0.05); }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
+.section-label { font-size: 11px; color: #64748B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+
+.month-btn { width: 100%; background: #1E293B; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; display: flex; align-items: center; gap: 12px; text-align: left; border: 1px solid #334155; }
+.month-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0; }
+.mini-bar { background: #0F172A; border-radius: 4px; height: 4px; overflow: hidden; margin-top: 4px; }
+.mini-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+
+.week-btn { width: 100%; background: #1E293B; border: 1px solid #334155; border-radius: 14px; padding: 14px; margin-bottom: 10px; cursor: pointer; text-align: left; }
+.week-btn.done { background: #0F2D1A; border-color: #166534; }
+.week-dots { display: flex; gap: 4px; margin-top: 8px; }
+.week-dot { flex: 1; height: 4px; border-radius: 2px; background: #334155; }
+.week-dot.done { background: #22C55E; }
+
+.day-item { display: flex; align-items: center; gap: 12px; background: #0F172A; border: 1px solid #1E293B; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; cursor: pointer; }
+.day-item.done { background: #052E16; border-color: #166534; }
+.day-check { width: 22px; height: 22px; border-radius: 6px; border: 2px solid #334155; background: transparent; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px; font-weight: 800; color: #052E16; }
+.day-check.done { border-color: #22C55E; background: #22C55E; }
+
+.stats-row { display: flex; gap: 10px; margin-bottom: 12px; }
+.stat-box { flex: 1; text-align: center; background: #0F172A; border-radius: 10px; padding: 10px 4px; }
+.stat-num { font-size: 19px; font-weight: 800; }
+.stat-label { font-size: 9px; color: #64748B; margin-top: 2px; }
+
+.back-btn { background: none; border: none; color: #60A5FA; font-size: 13px; cursor: pointer; padding: 12px 0; display: flex; align-items: center; gap: 4px; }
+.month-header { border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+textarea { width: 100%; background: #0F172A; border: 1px solid #334155; color: #E2E8F0; border-radius: 8px; padding: 10px; font-size: 13px; min-height: 100px; resize: vertical; font-family: inherit; }
+.btn { border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.btn-blue { background: #3B82F6; color: white; }
+.btn-gray { background: #334155; color: #94A3B8; }
+.btn-green { background: #16A34A; color: white; }
+.btn-red { background: #DC2626; color: white; }
+.btn-sm { padding: 4px 10px; font-size: 11px; }
+.flex-gap { display: flex; gap: 8px; margin-top: 8px; }
+input[type="date"] { background: #0F172A; border: 1px solid #334155; color: #E2E8F0; padding: 8px 12px; border-radius: 8px; font-size: 14px; width: 100%; margin-bottom: 8px; }
+.lab-box { background: #0F172A; border-radius: 8px; padding: 10px; margin-top: 10px; }
+.lab-label { font-size: 11px; color: #64748B; margin-bottom: 2px; }
+.empty { text-align: center; color: #475569; padding: 40px 16px; }
+.empty-icon { font-size: 36px; margin-bottom: 10px; }
+.cw-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.day-btn-sm { width: 38px; height: 38px; border-radius: 8px; border: 2px solid #334155; background: transparent; color: #475569; font-size: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.day-btn-sm.done { border-color: #22C55E; background: #052E16; color: #22C55E; }
+.days-grid { display: flex; gap: 5px; flex-wrap: wrap; }
+.weekly-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.week-summary-box { background: #0F172A; border-radius: 8px; padding: 8px 4px; text-align: center; border: 1px solid #1E293B; cursor: pointer; }
+.week-summary-box.done { border-color: #166534; background: #052E16; }
+.week-summary-box.current { border-color: #3B82F6; }
+.wsb-num { font-size: 11px; font-weight: 700; color: #64748B; }
+.wsb-bar { height: 3px; border-radius: 2px; background: #1E293B; margin: 4px 2px; overflow: hidden; }
+.wsb-fill { height: 100%; border-radius: 2px; }
+.wsb-days { font-size: 10px; font-weight: 600; }
+.pt16 { padding-top: 16px; }
+
+/* ---- SIMULADO ---- */
+.quiz-topic-btn { width:100%; background:#1E293B; border:1px solid #334155; border-radius:12px; padding:14px; margin-bottom:8px; cursor:pointer; text-align:left; display:flex; align-items:center; gap:12px; }
+.quiz-topic-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.quiz-score-badge { background:#0F172A; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:600; }
+
+.quiz-question-card { background:#1E293B; border-radius:14px; padding:16px; margin-bottom:12px; border:1px solid #334155; }
+.quiz-en { font-size:15px; font-weight:600; color:#F1F5F9; line-height:1.5; margin-bottom:8px; }
+.quiz-pt { font-size:13px; color:#94A3B8; line-height:1.5; margin-bottom:16px; padding:10px; background:#0F172A; border-radius:8px; border-left:3px solid #3B82F6; }
+.quiz-option { width:100%; background:#0F172A; border:2px solid #1E293B; border-radius:10px; padding:12px 14px; margin-bottom:8px; cursor:pointer; text-align:left; font-size:13px; color:#CBD5E1; display:flex; align-items:flex-start; gap:10px; transition: all 0.15s; }
+.quiz-option:disabled { cursor:default; }
+.quiz-option.correct { border-color:#22C55E; background:#052E16; color:#4ADE80; }
+.quiz-option.wrong { border-color:#EF4444; background:#2D0A0A; color:#FCA5A5; }
+.quiz-option.reveal { border-color:#166534; background:#0F2D1A; color:#4ADE80; }
+.quiz-opt-letter { width:22px; height:22px; border-radius:6px; background:#1E293B; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0; }
+.quiz-explanation { background:#0F2D1A; border:1px solid #166534; border-radius:10px; padding:12px; margin-top:10px; font-size:13px; color:#4ADE80; line-height:1.6; }
+.quiz-explanation.wrong-exp { background:#2D0A0A; border-color:#7F1D1D; color:#FCA5A5; }
+.quiz-progress { display:flex; gap:4px; margin-bottom:14px; }
+.quiz-prog-dot { flex:1; height:5px; border-radius:3px; background:#1E293B; }
+.quiz-prog-dot.done-right { background:#22C55E; }
+.quiz-prog-dot.done-wrong { background:#EF4444; }
+.quiz-prog-dot.current { background:#3B82F6; }
+.quiz-result { text-align:center; padding:20px 0; }
+.quiz-result-score { font-size:52px; font-weight:800; }
+.quiz-result-label { font-size:14px; color:#94A3B8; margin-top:4px; }
+.loading-dots { display:inline-flex; gap:4px; align-items:center; }
+.loading-dots span { width:6px; height:6px; border-radius:50%; background:#60A5FA; animation: bounce 1.2s infinite; }
+.loading-dots span:nth-child(2) { animation-delay:0.2s; }
+.loading-dots span:nth-child(3) { animation-delay:0.4s; }
+@keyframes bounce { 0%,80%,100%{transform:scale(0.7);opacity:0.5} 40%{transform:scale(1);opacity:1} }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const MONTHS = [
+  { id:1, title:"Fundamentos de Redes", color:"#3B82F6", weeks:[
+    { id:1, title:"Modelo OSI, tipos de rede e topologias", lab:"Desenhar o modelo OSI à mão / no Packet Tracer", days:["Assistir aula sobre modelo OSI","Estudar tipos de rede (LAN, WAN, MAN)","Topologias de rede","Revisão + exercícios","Laboratório prático","Simulação no Packet Tracer","Revisão semanal"] },
+    { id:2, title:"Modelo TCP/IP, protocolos e encapsulamento", lab:"Comparar OSI x TCP/IP em diagrama", days:["Modelo TCP/IP camadas","Protocolos principais","Encapsulamento de dados","Comparação OSI x TCP/IP","Laboratório prático","Exercícios de fixação","Revisão semanal"] },
+    { id:3, title:"Endereçamento IPv4, classes e máscara de sub-rede", lab:"Exercícios de conversão binária", days:["Endereçamento IPv4 básico","Classes de endereço","Máscara de sub-rede","Conversão binária","Laboratório prático","Exercícios de fixação","Revisão semanal"] },
+    { id:4, title:"Subnetting — CIDR e VLSM ⚠️ Prioridade máxima", lab:"20 exercícios de subnetting por dia", days:["CIDR — conceito e notação","VLSM — sub-redes variáveis","Cálculo de sub-redes","Exercícios intensivos","Laboratório no Packet Tracer","Simulado de subnetting","Revisão semanal + reforço"] },
+  ]},
+  { id:2, title:"Switching (Camada 2)", color:"#8B5CF6", weeks:[
+    { id:5, title:"Ethernet, MAC address e funcionamento do switch", lab:"Montar rede simples com switches", days:["Ethernet e padrões","Endereço MAC","Como o switch aprende MACs","Tabela CAM","Laboratório prático","Configuração básica de switch","Revisão semanal"] },
+    { id:6, title:"VLANs e Trunk", lab:"Criar VLANs e testar comunicação", days:["Conceito de VLAN","Configuração de VLANs","Trunk entre switches","Protocolo 802.1Q","Laboratório VLANs","Exercícios práticos","Revisão semanal"] },
+    { id:7, title:"STP — Spanning Tree Protocol", lab:"Simular loop e observar STP agindo", days:["Problema de loops na rede","Como o STP funciona","Eleição do Root Bridge","Estados das portas STP","Laboratório STP","RSTP — versão rápida","Revisão semanal"] },
+    { id:8, title:"EtherChannel e boas práticas", lab:"Configurar LACP no Packet Tracer", days:["Conceito de EtherChannel","Protocolos LACP e PAgP","Configuração EtherChannel","Boas práticas de switching","Laboratório EtherChannel","Exercícios práticos","Revisão semanal"] },
+  ]},
+  { id:3, title:"Roteamento (Camada 3)", color:"#10B981", weeks:[
+    { id:9, title:"Rotas estáticas e funcionamento do roteador", lab:"Configurar rotas estáticas no Packet Tracer", days:["Como o roteador funciona","Tabela de roteamento","Rota estática básica","Rota padrão (default route)","Laboratório rotas estáticas","Troubleshooting de rotas","Revisão semanal"] },
+    { id:10, title:"OSPF single-area", lab:"Montar topologia com 3 roteadores", days:["Protocolo OSPF — conceito","Tipos de redes OSPF","Configuração OSPF básica","Verificação e debug OSPF","Laboratório OSPF","Exercícios práticos","Revisão semanal"] },
+    { id:11, title:"OSPF multi-area", lab:"Expandir topologia com múltiplas áreas", days:["Multi-area OSPF — conceito","Area 0 e áreas secundárias","ABR e ASBR","Configuração multi-area","Laboratório multi-area","Troubleshooting OSPF","Revisão semanal"] },
+    { id:12, title:"Inter-VLAN Routing", lab:"Integrar com lab de VLANs anterior", days:["Problema de comunicação entre VLANs","Router-on-a-stick","Subinterfaces no roteador","Layer 3 Switch","Laboratório inter-VLAN","Exercícios completos","Revisão semanal"] },
+  ]},
+  { id:4, title:"Serviços e Segurança", color:"#F59E0B", weeks:[
+    { id:13, title:"DHCP e DNS", lab:"Configurar servidor DHCP no roteador", days:["DHCP — conceito e funcionamento","Configuração DHCP no roteador","DHCP Relay Agent","DNS — conceito e funcionamento","Laboratório DHCP + DNS","Exercícios práticos","Revisão semanal"] },
+    { id:14, title:"NAT e PAT", lab:"Simular acesso à internet com NAT", days:["NAT — conceito e tipos","Static NAT","Dynamic NAT","PAT (NAT Overload)","Laboratório NAT/PAT","Troubleshooting NAT","Revisão semanal"] },
+    { id:15, title:"ACLs — Standard e Extended", lab:"Criar regras de bloqueio e permissão", days:["ACL — conceito e funcionamento","ACL Standard","ACL Extended","Onde aplicar ACLs","Laboratório ACLs","Troubleshooting ACLs","Revisão semanal"] },
+    { id:16, title:"Port Security e SSH", lab:"Configurar acesso seguro aos dispositivos", days:["Port Security — conceito","Configuração Port Security","Modos de violação","SSH — configuração segura","Laboratório Port Security + SSH","Boas práticas de segurança","Revisão semanal"] },
+  ]},
+  { id:5, title:"IPv6, WAN e Wireless", color:"#EF4444", weeks:[
+    { id:17, title:"IPv6 — endereçamento e configuração", lab:"Montar rede dual-stack IPv4/IPv6", days:["Por que IPv6?","Estrutura do endereço IPv6","Tipos de endereço IPv6","Configuração IPv6 básica","Laboratório IPv6","Roteamento IPv6","Revisão semanal"] },
+    { id:18, title:"WAN, VPN e SD-WAN", lab:"Revisão teórica + resumos", days:["Conceitos WAN","Tecnologias WAN","VPN — conceito e tipos","SD-WAN — conceito","Laboratório teórico","Revisão e resumos","Revisão semanal"] },
+    { id:19, title:"Wireless — 802.11, WLC e segurança Wi-Fi", lab:"Simulação wireless no Packet Tracer", days:["Padrões 802.11","Componentes de rede wireless","WLC — Wireless LAN Controller","Segurança Wi-Fi (WPA2/WPA3)","Laboratório wireless","Exercícios práticos","Revisão semanal"] },
+    { id:20, title:"Automação, APIs REST e Ansible", lab:"Leitura + vídeos do Kalau", days:["Automação de redes — conceito","APIs REST","JSON e YANG","Ansible básico","DNA Center — conceito","Revisão teórica","Revisão semanal"] },
+  ]},
+  { id:6, title:"Revisão e Simulados", color:"#06B6D4", weeks:[
+    { id:21, title:"Revisão Subnetting e Switching", lab:"Labs completos de revisão", days:["Revisão Subnetting intensiva","Exercícios Subnetting","Revisão VLANs e Trunk","Revisão STP e EtherChannel","Laboratório switching completo","Simulado parcial","Revisão dos erros"] },
+    { id:22, title:"Revisão Roteamento e Serviços", lab:"Labs completos de revisão", days:["Revisão OSPF","Revisão NAT/PAT e ACLs","Revisão DHCP e DNS","Revisão IPv6","Laboratório roteamento completo","Simulado parcial","Revisão dos erros"] },
+    { id:23, title:"Simulados completos diários", lab:"Boson Netsim ou ExamTopics", days:["Simulado completo 1","Revisão erros simulado 1","Simulado completo 2","Revisão erros simulado 2","Simulado completo 3","Revisão erros simulado 3","Simulado final"] },
+    { id:24, title:"Revisão de erros e descanso pré-prova", lab:"Últimos ajustes", days:["Revisão pontos fracos","Revisão comandos IOS","Revisão conceitos chave","Descanso mental","Leitura leve de resumos","Descanso total","🎯 DIA DA PROVA!"] },
+  ]},
+];
+
+const QUIZ_TOPICS = [
+  { id:"osi", label:"OSI & TCP/IP Model", icon:"🗂️", color:"#3B82F6" },
+  { id:"ipv4", label:"IPv4 Addressing & Subnetting", icon:"🔢", color:"#8B5CF6" },
+  { id:"switching", label:"Switching & VLANs", icon:"🔀", color:"#10B981" },
+  { id:"routing", label:"Routing & OSPF", icon:"🗺️", color:"#F59E0B" },
+  { id:"services", label:"DHCP, DNS, NAT & ACLs", icon:"⚙️", color:"#EF4444" },
+  { id:"security", label:"Network Security", icon:"🔒", color:"#06B6D4" },
+  { id:"wireless", label:"Wireless & IPv6", icon:"📶", color:"#EC4899" },
+  { id:"mixed", label:"Mixed — Full CCNA", icon:"🎯", color:"#F97316" },
+];
+
+const DAY_NAMES = ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
+
+let state = {
+  view:"home", activeMonth:0, activeWeek:null,
+  editingNote:false,
+  progress:{}, notes:{}, startDate:null, examDate:null,
+  quiz:{ phase:"topics", topic:null, questions:[], current:0, answers:[], loading:false, history:{} }
+};
+
+function load() {
+  try { state.progress = JSON.parse(localStorage.getItem("ccna_progress")||"{}"); } catch{}
+  try { state.notes = JSON.parse(localStorage.getItem("ccna_notes")||"{}"); } catch{}
+  try { state.quiz.history = JSON.parse(localStorage.getItem("ccna_quiz_history")||"{}"); } catch{}
+  state.startDate = localStorage.getItem("ccna_start")||null;
+  state.examDate = localStorage.getItem("ccna_exam")||null;
+}
+
+function save(key,val){ localStorage.setItem(key, typeof val==="string"?val:JSON.stringify(val)); }
+
+function toggleDay(weekId,dayIdx){
+  const key=`w${weekId}_d${dayIdx}`;
+  state.progress[key]=!state.progress[key];
+  save("ccna_progress",state.progress); render();
+}
+function getWeekDone(weekId){ let c=0; for(let i=0;i<7;i++) if(state.progress[`w${weekId}_d${i}`]) c++; return c; }
+function getTotals(){ const total=168,done=Object.values(state.progress).filter(Boolean).length; return{total,done,pct:Math.round(done/total*100)}; }
+function getCurrentWeekIdx(){ if(!state.startDate) return -1; const diff=Math.floor((Date.now()-new Date(state.startDate))/86400000); return Math.min(Math.max(Math.floor(diff/7),0),23); }
+function getCurrentWeek(){ const idx=getCurrentWeekIdx(); if(idx<0) return null; let c=0; for(const m of MONTHS) for(const w of m.weeks){ if(c===idx) return{week:w,month:m}; c++; } return null; }
+function getDaysUntilExam(){ if(!state.examDate) return null; return Math.ceil((new Date(state.examDate)-Date.now())/86400000); }
+function getDaysStudying(){ if(!state.startDate) return null; return Math.floor((Date.now()-new Date(state.startDate))/86400000); }
+function hex2rgba(hex,a){ const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16); return`rgba(${r},${g},${b},${a})`; }
+function fmtDate(d){ if(!d) return""; const dt=new Date(d+"T00:00:00"); return dt.toLocaleDateString("pt-BR",{day:"2-digit",month:"short",year:"numeric"}); }
+
+// ---- QUIZ AI ----
+async function startQuiz(topicId){
+  const topic = QUIZ_TOPICS.find(t=>t.id===topicId);
+  state.quiz = {...state.quiz, phase:"loading", topic:topicId, questions:[], current:0, answers:[], loading:true};
+  render();
+
+  const prompt = `You are a CCNA 200-301 exam question generator. Generate exactly 5 multiple-choice questions about: "${topic.label}".
+
+STRICT FORMAT — respond ONLY with valid JSON, no markdown, no extra text:
+{
+  "questions": [
+    {
+      "en": "Question text in English (as it would appear on the real CCNA exam)",
+      "pt": "Tradução fiel da pergunta em português brasileiro",
+      "options": [
+        {"letter":"A","en":"Option text in English","pt":"Tradução em português"},
+        {"letter":"B","en":"Option text in English","pt":"Tradução em português"},
+        {"letter":"C","en":"Option text in English","pt":"Tradução em português"},
+        {"letter":"D","en":"Option text in English","pt":"Tradução em português"}
+      ],
+      "correct": "A",
+      "explanation": "Explicação detalhada em português de por que esta é a resposta correta e por que as outras estão erradas. Mencione conceitos CCNA relevantes."
+    }
+  ]
+}
+
+Rules:
+- Questions must be realistic CCNA exam difficulty
+- Mix scenario-based and conceptual questions
+- Correct answer should vary (not always A)
+- Explanations in Portuguese, technical and educational`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        model:"claude-sonnet-4-6",
+        max_tokens:1000,
+        messages:[{role:"user",content:prompt}]
+      })
+    });
+    const data = await res.json();
+    const text = data.content[0].text.replace(/```json|```/g,"").trim();
+    const parsed = JSON.parse(text);
+    state.quiz.questions = parsed.questions;
+    state.quiz.phase = "question";
+    state.quiz.loading = false;
+  } catch(e) {
+    state.quiz.phase = "error";
+    state.quiz.loading = false;
+  }
+  render();
+}
+
+function answerQuestion(letter){
+  const q = state.quiz.questions[state.quiz.current];
+  const correct = letter === q.correct;
+  state.quiz.answers[state.quiz.current] = { chosen: letter, correct };
+  render();
+}
+
+function nextQuestion(){
+  if(state.quiz.current < state.quiz.questions.length - 1){
+    state.quiz.current++;
+    render();
+  } else {
+    // Save history
+    const right = state.quiz.answers.filter(a=>a.correct).length;
+    const total = state.quiz.questions.length;
+    const hist = state.quiz.history;
+    if(!hist[state.quiz.topic]) hist[state.quiz.topic] = [];
+    hist[state.quiz.topic].push({ date: new Date().toLocaleDateString("pt-BR"), score: right, total });
+    if(hist[state.quiz.topic].length > 5) hist[state.quiz.topic].shift();
+    save("ccna_quiz_history", hist);
+    state.quiz.phase = "result";
+    render();
+  }
+}
+
+// ---- RENDER ----
+function renderHeader(){
+  const {done,pct}=getTotals();
+  const daysLeft=getDaysUntilExam();
+  const daysIn=getDaysStudying();
+  const curIdx=getCurrentWeekIdx();
+  let countdown="";
+  if(state.startDate&&state.examDate){
+    const examDays=daysLeft!==null?Math.max(daysLeft,0):"—";
+    const studyDays=daysIn!==null?Math.max(daysIn,0):"—";
+    const weekNum=curIdx>=0?curIdx+1:"—";
+    const examColor=daysLeft!==null&&daysLeft<=30?"#EF4444":daysLeft!==null&&daysLeft<=60?"#F59E0B":"#22C55E";
+    countdown=`<div class="countdown-banner">
+      <div class="countdown-box"><div class="countdown-num" style="color:${examColor}">${examDays}</div><div class="countdown-label">p/ prova</div></div>
+      <div class="countdown-box"><div class="countdown-num" style="color:#60A5FA">${studyDays}</div><div class="countdown-label">estudando</div></div>
+      <div class="countdown-box"><div class="countdown-num" style="color:#8B5CF6">S${weekNum}</div><div class="countdown-label">semana</div></div>
+      <div class="countdown-box"><div class="countdown-num" style="color:#10B981">${pct}%</div><div class="countdown-label">concluído</div></div>
+    </div>`;
+  }
+  return`<div class="header">
+    <div class="header-top"><div class="header-title">📡 CCNA Tracker</div><div class="badge">${done} dias ✓</div></div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="progress-text"><span>${fmtDate(state.startDate)||"Configure as datas"}</span><span style="color:#EF4444">${fmtDate(state.examDate)||"—"} 🎯</span></div>
+    ${countdown}
+  </div>`;
+}
+
+function renderNav(){
+  const tabs=[{id:"home",icon:"🏠",label:"Início"},{id:"weeks",icon:"📊",label:"Semanas"},{id:"months",icon:"📅",label:"Meses"},{id:"quiz",icon:"🧠",label:"Simulado"},{id:"notes",icon:"📝",label:"Notas"}];
+  const activeTab=state.view==="month"||state.view==="week"?"months":state.view;
+  return`<nav class="nav">${tabs.map(t=>`<button class="nav-btn ${activeTab===t.id?"active":""}" onclick="nav('${t.id}')"><span class="icon">${t.icon}</span><span>${t.label}</span></button>`).join("")}</nav>`;
+}
+
+function renderSetup(){
+  return`<div class="section pt16"><div class="card card-blue">
+    <div style="font-size:15px;font-weight:700;color:#93C5FD;margin-bottom:12px">⚙️ Configure seu cronograma</div>
+    <div class="section-label">Data de início dos estudos</div>
+    <input type="date" id="inp_start" value="${state.startDate||''}">
+    <div class="section-label" style="margin-top:10px">Data prevista da prova</div>
+    <input type="date" id="inp_exam" value="${state.examDate||''}">
+    <button class="btn btn-blue" style="width:100%;margin-top:12px" onclick="saveSetup()">Salvar e começar 🚀</button>
+  </div></div>`;
+}
+
+function renderHome(){
+  if(!state.startDate||!state.examDate) return renderSetup();
+  const {total,done,pct}=getTotals();
+  const cur=getCurrentWeek();
+  const daysLeft=getDaysUntilExam();
+
+  let currentBlock="";
+  if(cur){
+    const weekDone=getWeekDone(cur.week.id);
+    currentBlock=`<div class="card" style="border-color:${cur.month.color};background:${hex2rgba(cur.month.color,0.05)}">
+      <div class="cw-header">
+        <div>
+          <div class="tag" style="background:${hex2rgba(cur.month.color,0.2)};color:${cur.month.color}">📍 Semana atual</div>
+          <div style="font-size:15px;font-weight:700;color:#F1F5F9">Semana ${cur.week.id} — ${cur.month.title}</div>
+          <div style="font-size:12px;color:#94A3B8;margin-top:2px">${cur.week.title}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;margin-left:8px">
+          <div style="font-size:22px;font-weight:800;color:${cur.month.color}">${weekDone}<span style="font-size:12px;color:#64748B">/7</span></div>
+          <div style="font-size:9px;color:#64748B">dias</div>
+        </div>
+      </div>
+      <div class="days-grid">${DAY_NAMES.map((d,i)=>`<button class="day-btn-sm ${state.progress[`w${cur.week.id}_d${i}`]?"done":""}" onclick="toggleDay(${cur.week.id},${i})">${d}</button>`).join("")}</div>
+      <div class="lab-box"><div class="lab-label">🧪 Lab desta semana</div><div style="font-size:12px;color:#94A3B8">${cur.week.lab}</div></div>
+    </div>`;
+  }
+
+  const examBlock=daysLeft!==null?`<div class="card" style="border-color:${daysLeft<=30?"#EF4444":daysLeft<=60?"#F59E0B":"#334155"}">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><div class="section-label" style="margin-bottom:2px">🎯 Prova CCNA 200-301</div><div style="font-size:13px;color:#94A3B8">${fmtDate(state.examDate)}</div></div>
+      <div style="text-align:right"><div style="font-size:28px;font-weight:800;color:${daysLeft<=30?"#EF4444":daysLeft<=60?"#F59E0B":"#22C55E"}">${Math.max(daysLeft,0)}</div><div style="font-size:10px;color:#64748B">dias restantes</div></div>
+    </div>
+    <button class="btn btn-gray btn-sm" style="margin-top:10px;width:100%" onclick="nav('setup')">✏️ Editar datas</button>
+  </div>`:"";
+
+  const statsBlock=`<div class="card">
+    <div class="section-label">Progresso geral</div>
+    <div class="stats-row">
+      ${[{l:"Dias",v:done,t:total,c:"#3B82F6"},{l:"Semanas",v:Math.floor(done/7),t:24,c:"#8B5CF6"},{l:"Meses",v:Math.min(Math.floor(done/28),6),t:6,c:"#10B981"}]
+        .map(s=>`<div class="stat-box"><div class="stat-num" style="color:${s.c}">${s.v}</div><div class="stat-label">/ ${s.t} ${s.l}</div></div>`).join("")}
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="progress-text"><span>${done} de ${total} dias</span><span style="color:#60A5FA;font-weight:700">${pct}%</span></div>
+  </div>`;
+
+  const monthsBlock=MONTHS.map((month,mi)=>{
+    const doneW=month.weeks.reduce((a,w)=>a+getWeekDone(w.id),0);
+    const p=Math.round((doneW/(month.weeks.length*7))*100);
+    return`<button class="month-btn" style="border-color:${p===100?month.color:"#334155"}" onclick="goMonth(${mi})">
+      <div class="month-icon" style="background:${hex2rgba(month.color,0.15)};color:${month.color}">${p===100?"✓":"M"+month.id}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:#F1F5F9">${month.title}</div><div class="mini-bar"><div class="mini-fill" style="width:${p}%;background:${month.color}"></div></div></div>
+      <div style="font-size:13px;font-weight:700;color:${month.color};flex-shrink:0">${p}%</div>
+    </button>`;
+  }).join("");
+
+  return`<div class="section pt16">${examBlock}${currentBlock}${statsBlock}<div class="section-label">Meses</div>${monthsBlock}</div>`;
+}
+
+function renderWeeksView(){
+  const curIdx=getCurrentWeekIdx();
+  return`<div class="section pt16">
+    <div style="font-size:15px;font-weight:700;color:#F1F5F9;margin-bottom:4px">Acompanhamento Semanal</div>
+    <div style="font-size:12px;color:#64748B;margin-bottom:14px">Toque em uma semana para abrir o checklist</div>
+    ${MONTHS.map((month,mi)=>{
+      const doneW=month.weeks.reduce((a,w)=>a+getWeekDone(w.id),0);
+      const p=Math.round((doneW/(month.weeks.length*7))*100);
+      return`<div style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-size:12px;font-weight:700;color:${month.color}">MÊS ${month.id} — ${month.title}</div>
+          <div style="font-size:11px;color:${month.color};font-weight:600">${p}%</div>
+        </div>
+        <div class="weekly-grid">${month.weeks.map(week=>{
+          const done=getWeekDone(week.id);
+          let count=0; MONTHS.forEach(m2=>m2.weeks.forEach(w2=>{if(w2.id<week.id)count++;}));
+          const isCur=count===curIdx;
+          return`<div class="week-summary-box ${done===7?"done":""} ${isCur?"current":""}" onclick="goWeek(${week.id})">
+            <div class="wsb-num" style="color:${isCur?"#60A5FA":done===7?"#22C55E":month.color}">S${week.id}${isCur?" 📍":""}</div>
+            <div class="wsb-bar"><div class="wsb-fill" style="width:${Math.round(done/7*100)}%;background:${done===7?"#22C55E":month.color}"></div></div>
+            <div class="wsb-days" style="color:${done===7?"#22C55E":done>0?month.color:"#475569"}">${done===7?"✓":done+"/7"}</div>
+          </div>`;
+        }).join("")}</div>
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+
+function renderAllMonths(){
+  return`<div class="section pt16">
+    <div style="font-size:15px;font-weight:700;color:#F1F5F9;margin-bottom:14px">Todos os Meses</div>
+    ${MONTHS.map((month,mi)=>{
+      const doneW=month.weeks.reduce((a,w)=>a+getWeekDone(w.id),0);
+      const p=Math.round((doneW/(month.weeks.length*7))*100);
+      return`<button class="month-btn" style="border-color:${p===100?month.color:"#334155"}" onclick="goMonth(${mi})">
+        <div class="month-icon" style="background:${hex2rgba(month.color,0.15)};color:${month.color}">${p===100?"✓":"M"+month.id}</div>
+        <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:#F1F5F9">${month.title}</div><div class="mini-bar"><div class="mini-fill" style="width:${p}%;background:${month.color}"></div></div></div>
+        <div style="font-size:13px;font-weight:700;color:${month.color};flex-shrink:0">${p}%</div>
+      </button>`;
+    }).join("")}
+  </div>`;
+}
+
+function renderMonths(){
+  const month=MONTHS[state.activeMonth];
+  const curIdx=getCurrentWeekIdx();
+  return`<div class="section">
+    <button class="back-btn" onclick="nav('months')">← Voltar</button>
+    <div class="month-header" style="background:${hex2rgba(month.color,0.1)};border:1px solid ${hex2rgba(month.color,0.2)}">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:${month.color}">Mês ${month.id}</div>
+      <div style="font-size:17px;font-weight:700;color:#F1F5F9">${month.title}</div>
+    </div>
+    ${month.weeks.map(week=>{
+      const done=getWeekDone(week.id);
+      let count=0; MONTHS.forEach(m2=>m2.weeks.forEach(w2=>{if(w2.id<week.id)count++;}));
+      const isCur=count===curIdx;
+      return`<button class="week-btn ${done===7?"done":""}" style="${isCur?`border-color:${month.color};border-width:2px`:""}" onclick="goWeek(${week.id})">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="tag" style="background:${hex2rgba(month.color,0.2)};color:${month.color}">Semana ${week.id}${isCur?" 📍":""}</div>
+            <div style="font-size:13px;font-weight:600;color:#F1F5F9">${week.title}</div>
+          </div>
+          <div style="font-size:18px;font-weight:800;color:${done===7?"#22C55E":month.color}">${done===7?"✓":done+"/7"}</div>
+        </div>
+        <div class="week-dots">${Array(7).fill(0).map((_,i)=>`<div class="week-dot ${state.progress[`w${week.id}_d${i}`]?"done":""}"></div>`).join("")}</div>
+      </button>`;
+    }).join("")}
+  </div>`;
+}
+
+function renderWeek(){
+  const month=MONTHS.find(m=>m.weeks.some(w=>w.id===state.activeWeek));
+  const week=month?.weeks.find(w=>w.id===state.activeWeek);
+  if(!week||!month) return"";
+  const noteKey=`week_${week.id}`;
+  const existingNote=state.notes[noteKey]||"";
+  const done=getWeekDone(week.id);
+  const noteSection=state.editingNote?`
+    <textarea id="noteArea" placeholder="Anotações, dúvidas, comandos importantes...">${existingNote}</textarea>
+    <div class="flex-gap"><button class="btn btn-blue" style="flex:1" onclick="saveNote('${noteKey}')">Salvar</button><button class="btn btn-gray" onclick="cancelNote()">Cancelar</button></div>`
+    :existingNote?`<div style="font-size:13px;color:#94A3B8;white-space:pre-wrap;line-height:1.6">${existingNote}</div>`
+    :`<div style="font-size:13px;color:#334155;font-style:italic">Nenhuma anotação ainda.</div>`;
+  return`<div class="section">
+    <button class="back-btn" onclick="goMonth(${MONTHS.indexOf(month)})">← Voltar</button>
+    <div class="month-header" style="background:${hex2rgba(month.color,0.1)};border:1px solid ${hex2rgba(month.color,0.2)}">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:${month.color}">Semana ${week.id} · ${month.title}</div>
+      <div style="font-size:16px;font-weight:700;color:#F1F5F9">${week.title}</div>
+      <div style="margin-top:6px;font-size:12px;color:#64748B">${done}/7 dias concluídos</div>
+    </div>
+    <div class="card">
+      <div class="section-label">Checklist da semana</div>
+      ${week.days.map((day,i)=>{const d=state.progress[`w${week.id}_d${i}`];return`<div class="day-item ${d?"done":""}" onclick="toggleDay(${week.id},${i})">
+        <div class="day-check ${d?"done":""}">${d?"✓":""}</div>
+        <div><div style="font-size:11px;font-weight:600;color:${month.color}">${DAY_NAMES[i]}</div><div style="font-size:13px;color:${d?"#4ADE80":"#CBD5E1"}">${day}</div></div>
+      </div>`;}).join("")}
+    </div>
+    <div class="card"><div class="lab-label" style="margin-bottom:6px">🧪 Lab da semana</div><div style="font-size:13px;color:#94A3B8">${week.lab}</div></div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="section-label" style="margin-bottom:0">📝 Anotações</div>
+        ${!state.editingNote?`<button class="btn btn-gray btn-sm" onclick="startNote('${noteKey}')">${existingNote?"Editar":"Adicionar"}</button>`:""}
+      </div>${noteSection}
+    </div>
+  </div>`;
+}
+
+function renderQuiz(){
+  const q=state.quiz;
+
+  if(q.phase==="topics"){
+    return`<div class="section pt16">
+      <div style="font-size:15px;font-weight:700;color:#F1F5F9;margin-bottom:4px">🧠 Simulado CCNA</div>
+      <div style="font-size:12px;color:#64748B;margin-bottom:14px">Perguntas no estilo real da prova · Inglês + Português</div>
+      ${QUIZ_TOPICS.map(t=>{
+        const hist=q.history[t.id];
+        const lastScore=hist&&hist.length>0?hist[hist.length-1]:null;
+        return`<button class="quiz-topic-btn" onclick="startQuiz('${t.id}')">
+          <div class="quiz-topic-icon" style="background:${hex2rgba(t.color,0.15)}">${t.icon}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;color:#F1F5F9">${t.label}</div>
+            <div style="font-size:11px;color:#64748B;margin-top:2px">5 questões · múltipla escolha</div>
+          </div>
+          ${lastScore?`<div class="quiz-score-badge" style="color:${lastScore.score>=4?"#22C55E":lastScore.score>=3?"#F59E0B":"#EF4444"}">${lastScore.score}/${lastScore.total}</div>`:""}
+        </button>`;
+      }).join("")}
+    </div>`;
+  }
+
+  if(q.phase==="loading"){
+    return`<div class="section pt16">
+      <div class="card" style="text-align:center;padding:48px 20px">
+        <div style="font-size:32px;margin-bottom:16px">🧠</div>
+        <div style="font-size:15px;font-weight:600;color:#F1F5F9;margin-bottom:8px">Gerando questões com IA...</div>
+        <div style="font-size:13px;color:#64748B;margin-bottom:20px">No estilo real da prova CCNA 200-301</div>
+        <div class="loading-dots"><span></span><span></span><span></span></div>
+      </div>
+    </div>`;
+  }
+
+  if(q.phase==="error"){
+    return`<div class="section pt16">
+      <div class="card" style="text-align:center;padding:32px 16px;border-color:#EF4444">
+        <div style="font-size:32px;margin-bottom:10px">⚠️</div>
+        <div style="font-size:14px;font-weight:600;color:#FCA5A5;margin-bottom:8px">Erro ao gerar questões</div>
+        <div style="font-size:12px;color:#64748B;margin-bottom:16px">Verifique sua conexão e tente novamente.</div>
+        <button class="btn btn-blue" onclick="backToTopics()">← Voltar aos tópicos</button>
+      </div>
+    </div>`;
+  }
+
+  if(q.phase==="question"){
+    const question=q.questions[q.current];
+    const answered=q.answers[q.current];
+    const letters=["A","B","C","D"];
+    return`<div class="section pt16">
+      <button class="back-btn" onclick="backToTopics()">← Sair do simulado</button>
+      <div class="quiz-progress">${q.questions.map((_,i)=>`<div class="quiz-prog-dot ${i<q.current?(q.answers[i]?.correct?"done-right":"done-wrong"):i===q.current?"current":""}"></div>`).join("")}</div>
+      <div style="font-size:11px;color:#64748B;margin-bottom:10px">Questão ${q.current+1} de ${q.questions.length}</div>
+      <div class="quiz-question-card">
+        <div class="quiz-en">${question.en}</div>
+        <div class="quiz-pt">🇧🇷 ${question.pt}</div>
+        ${question.options.map(opt=>{
+          let cls="quiz-option";
+          if(answered){
+            if(opt.letter===question.correct) cls+=" reveal";
+            else if(opt.letter===answered.chosen&&!answered.correct) cls+=" wrong";
+          }
+          return`<button class="quiz-option ${answered?"":""}" 
+            style="${answered?`border-color:${opt.letter===question.correct?"#22C55E":opt.letter===answered.chosen&&!answered.correct?"#EF4444":"#1E293B"};background:${opt.letter===question.correct?"#052E16":opt.letter===answered.chosen&&!answered.correct?"#2D0A0A":"#0F172A"}`:""}
+            ${answered?"disabled":""}"
+            onclick="${answered?"":"answerQuestion('"+opt.letter+"')"}"
+          >
+            <div class="quiz-opt-letter" style="${answered&&opt.letter===question.correct?"background:#166534;color:#4ADE80":answered&&opt.letter===answered.chosen&&!answered.correct?"background:#7F1D1D;color:#FCA5A5":""}">${opt.letter}</div>
+            <div>
+              <div style="font-size:13px;font-weight:500">${opt.en}</div>
+              <div style="font-size:11px;color:#64748B;margin-top:2px">${opt.pt}</div>
+            </div>
+          </button>`;
+        }).join("")}
+        ${answered?`<div class="quiz-explanation ${answered.correct?"":"wrong-exp"}">
+          ${answered.correct?"✅ Correto! ":"❌ Incorreto. "}${question.explanation}
+        </div>`:""}
+      </div>
+      ${answered?`<button class="btn ${q.current<q.questions.length-1?"btn-blue":"btn-green"}" style="width:100%" onclick="nextQuestion()">
+        ${q.current<q.questions.length-1?"Próxima questão →":"Ver resultado 🏁"}
+      </button>`:""}
+    </div>`;
+  }
+
+  if(q.phase==="result"){
+    const right=q.answers.filter(a=>a.correct).length;
+    const total=q.questions.length;
+    const pct=Math.round(right/total*100);
+    const color=pct>=80?"#22C55E":pct>=60?"#F59E0B":"#EF4444";
+    const msg=pct>=80?"Excelente! Continue assim! 🎉":pct>=60?"Bom progresso! Revise os erros 📚":"Precisa revisar este tópico 💪";
+    const topic=QUIZ_TOPICS.find(t=>t.id===q.topic);
+    const hist=q.history[q.topic]||[];
+    return`<div class="section pt16">
+      <div class="card" style="text-align:center;border-color:${color}">
+        <div style="font-size:13px;color:#64748B;margin-bottom:8px">${topic?.icon} ${topic?.label}</div>
+        <div class="quiz-result-score" style="color:${color}">${right}/${total}</div>
+        <div class="quiz-result-label">${pct}% de acerto</div>
+        <div style="font-size:14px;color:${color};margin-top:12px;font-weight:600">${msg}</div>
+      </div>
+      ${hist.length>1?`<div class="card">
+        <div class="section-label">Histórico neste tópico</div>
+        ${hist.map((h,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:${i<hist.length-1?"1px solid #1E293B":"none"}">
+          <div style="font-size:12px;color:#64748B">${h.date}</div>
+          <div style="font-size:13px;font-weight:700;color:${h.score/h.total>=0.8?"#22C55E":h.score/h.total>=0.6?"#F59E0B":"#EF4444"}">${h.score}/${h.total}</div>
+        </div>`).join("")}
+      </div>`:""}
+      <div class="flex-gap">
+        <button class="btn btn-blue" style="flex:1" onclick="startQuiz('${q.topic}')">Refazer 🔄</button>
+        <button class="btn btn-gray" style="flex:1" onclick="backToTopics()">Outros tópicos</button>
+      </div>
+    </div>`;
+  }
+}
+
+function renderNotes(){
+  const weeksWithNotes=MONTHS.flatMap(m=>m.weeks.filter(w=>state.notes[`week_${w.id}`]).map(w=>({week:w,month:m})));
+  return`<div class="section pt16">
+    <div style="font-size:15px;font-weight:700;color:#F1F5F9;margin-bottom:14px">Minhas Anotações</div>
+    ${weeksWithNotes.length===0?`<div class="empty"><div class="empty-icon">📝</div>Nenhuma anotação ainda.<br>Abra uma semana e adicione suas notas!</div>`
+    :weeksWithNotes.map(({week,month})=>`<div class="card">
+      <div class="tag" style="background:${hex2rgba(month.color,0.2)};color:${month.color}">Semana ${week.id}</div>
+      <div style="font-size:13px;font-weight:600;color:#F1F5F9;margin-bottom:8px">${week.title}</div>
+      <div style="font-size:13px;color:#94A3B8;white-space:pre-wrap;line-height:1.6">${state.notes[`week_${week.id}`]}</div>
+    </div>`).join("")}
+  </div>`;
+}
+
+function render(){
+  let content="";
+  if(state.view==="home"||state.view==="setup") content=renderHome();
+  else if(state.view==="weeks") content=renderWeeksView();
+  else if(state.view==="months") content=renderAllMonths();
+  else if(state.view==="month") content=renderMonths();
+  else if(state.view==="week") content=renderWeek();
+  else if(state.view==="quiz") content=renderQuiz();
+  else if(state.view==="notes") content=renderNotes();
+  document.getElementById("app").innerHTML=renderHeader()+`<div>${content}</div>`+renderNav();
+}
+
+function nav(v){ state.view=v; state.editingNote=false; if(v==="months"){state.view="months";} render(); }
+function goMonth(mi){ state.activeMonth=mi; state.view="month"; render(); }
+function goWeek(wid){ state.activeWeek=wid; state.view="week"; state.editingNote=false; render(); }
+function saveSetup(){ const s=document.getElementById("inp_start")?.value,e=document.getElementById("inp_exam")?.value; if(!s||!e){alert("Preencha as duas datas!");return;} state.startDate=s;state.examDate=e;save("ccna_start",s);save("ccna_exam",e);state.view="home";render(); }
+function startNote(key){ state.editingNote=true; render(); setTimeout(()=>{document.getElementById("noteArea")?.focus();},50); }
+function cancelNote(){ state.editingNote=false; render(); }
+function saveNote(key){ state.notes[key]=document.getElementById("noteArea")?.value||"";save("ccna_notes",state.notes);state.editingNote=false;render(); }
+function backToTopics(){ state.quiz.phase="topics"; render(); }
+
+load(); render();
+</script>
+</body>
+</html>
